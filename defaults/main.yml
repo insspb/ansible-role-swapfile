@@ -1,2 +1,7 @@
 ---
-# defaults file for insspb.swapfile
+swap_location: "/"
+swap_filename: "swapfile"
+swap_set_custom_size: false
+swap_custom_size: 1024
+swap_set_swappiness: false
+swap_swappiness: 60
