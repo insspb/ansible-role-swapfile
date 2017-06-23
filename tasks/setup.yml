@@ -1,5 +1,5 @@
 ---
-- name: Swapfile | Set swapfile permissions
+- name: Swapfile | Configure | Set swapfile permissions
   become: True
   file:
     path: "{{ swap_file_path }}/{{ swap_file_name }}"
@@ -7,7 +7,7 @@
     owner: "{{ swap_file_owner }}"
     group: "{{ swap_file_group }}"
 
-- name: Swapfile | Permanent onfigure vm.swappiness
+- name: Swapfile | Configure | Permanent onfigure vm.swappiness
   become: True
   lineinfile:
     dest: "/etc/sysctl.conf"
@@ -17,7 +17,7 @@
   notify: Swapfile | Reload kernel parameters
   when: "{{ swap_set_swappiness }}"
 
-- name: Swapfile | Permanent onfigure vm.vfs_cache_pressure
+- name: Swapfile | Configure | Permanent onfigure vm.vfs_cache_pressure
   become: True
   lineinfile:
     dest: "/etc/sysctl.conf"
