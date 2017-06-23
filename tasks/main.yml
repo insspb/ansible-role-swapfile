@@ -1,11 +1,11 @@
 ---
-- name: Swapfile | Install new swap file.
-  include: install.yml
-  when: swap_install == True
-
 - name: Swapfile | Remove old swap file.
   include: remove.yml
   when: swap_remove  == True
+
+- name: Swapfile | Install new swap file.
+  include: install.yml
+  when: swap_install == True
 
 - name: Swapfile | Check swap and swapfile settings.
   include: setup.yml
