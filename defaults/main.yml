@@ -12,3 +12,5 @@ swap_set_custom_size: False
 swap_custom_size: 1024
 swap_set_swappiness: False
 swap_swappiness: 60
+swap_set_vfs_cache_pressure: False
+swap_vfs_cache_pressure: 100

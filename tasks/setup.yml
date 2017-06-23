@@ -16,3 +16,14 @@
     state: present
   notify: Swapfile | Reload kernel parameters
   when: "{{ swap_set_swappiness }}"
+
+- name: Swapfile | Permanent onfigure vm.vfs_cache_pressure
+  become: True
+  lineinfile:
+    dest: "/etc/sysctl.conf"
+    line: "vm.vfs_cache_pressure = {{ swap_vfs_cache_pressure }}"
+    regexp: '^vm.vfs_cache_pressure[\s]?='
+    state: present
+  notify: Swapfile | Reload kernel parameters
+  when: "{{ swap_set_vfs_cache_pressure }}"
+
