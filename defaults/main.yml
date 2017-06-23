@@ -3,7 +3,7 @@ swap_install: True
 swap_ignore_partition: False
 swap_check: True
 swap_remove: False
-swap_file_path: "/swapdir"
+swap_file_path: "/"
 swap_file_name: "swapfile"
 swap_file_priority: 0
 swap_file_permisions: "0600"
