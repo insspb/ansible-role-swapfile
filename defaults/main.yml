@@ -1,7 +1,14 @@
 ---
-swap_location: "/"
-swap_filename: "swapfile"
-swap_set_custom_size: false
+swap_install: False
+swap_ignore_partition: False
+swap_check: False
+swap_remove: False
+swap_file_path: "/"
+swap_file_name: "swapfile"
+swap_file_permisions: "0600"
+swap_file_owner: "root"
+swap_file_group: "root"
+swap_set_custom_size: False
 swap_custom_size: 1024
-swap_set_swappiness: false
+swap_set_swappiness: False
 swap_swappiness: 60

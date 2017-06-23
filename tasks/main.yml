@@ -1,2 +1,13 @@
 ---
-# tasks file for insspb.swapfile
+- name: Swapfile | Install new swap file.
+  include: install.yml
+  when: "{{ swap_install }}"
+
+- name: Swapfile | Remove old swap file.
+  include: remove.yml
+  when: "{{ swap_remove }}"
+
+- name: Swapfile | Check swap and swapfile settings.
+  include: setup.yml
+  when: ("{{ swap_check }}") or
+        ("{{ swap_install }}")
