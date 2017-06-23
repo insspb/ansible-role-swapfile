@@ -1,2 +1,5 @@
 ---
-# handlers file for insspb.swapfile
+- name: Swapfile | Reload kernel parameters
+  become: True
+  command: sysctl -p
+
