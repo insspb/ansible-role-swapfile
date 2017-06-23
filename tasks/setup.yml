@@ -7,7 +7,7 @@
     owner: "{{ swap_file_owner }}"
     group: "{{ swap_file_group }}"
 
-- name: Swapfile | Configure | Permanent onfigure vm.swappiness
+- name: Swapfile | Configure | Permanent configure vm.swappiness
   become: True
   lineinfile:
     dest: "/etc/sysctl.conf"
@@ -15,9 +15,9 @@
     regexp: '^vm.swappiness[\s]?='
     state: present
   notify: Swapfile | Reload kernel parameters
-  when: "{{ swap_set_swappiness }}"
+  when: swap_set_swappiness
 
-- name: Swapfile | Configure | Permanent onfigure vm.vfs_cache_pressure
+- name: Swapfile | Configure | Permanent configure vm.vfs_cache_pressure
   become: True
   lineinfile:
     dest: "/etc/sysctl.conf"
@@ -25,5 +25,5 @@
     regexp: '^vm.vfs_cache_pressure[\s]?='
     state: present
   notify: Swapfile | Reload kernel parameters
-  when: "{{ swap_set_vfs_cache_pressure }}"
+  when: swap_set_vfs_cache_pressure
 
