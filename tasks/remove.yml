@@ -24,7 +24,14 @@
   when:
     - swap_remove_allocated.stat.exists == True
 
-- name: Swapfile | Remove | Remove directory for swapfile
+- name: Swapfile | Remove | Check swapfile directory is empty
+  become: True
+  find:
+    path: "{{ swap_file_path }}"
+    recurse: yes
+  register: swap_file_directory_empty
+
+- name: Swapfile | Remove | Remove swapfile directory if empty
   become: True
   file:
     path: "{{ swap_file_path }}"
@@ -35,6 +42,7 @@
   when:
     - swap_remove_allocated.stat.exists == True
     - swap_file_path != "/"
+    - swap_file_directory_empty.matched|int == 0
 
 #- name: Swapfile | Remove | Remove swap entry from fstab
 #  become: True
