@@ -1,5 +1,1 @@
 ---
-- name: Swapfile | Handlers | Reload kernel parameters
-  become: True
-  command: sysctl -p
-
