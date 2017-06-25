@@ -1,18 +1,17 @@
 ---
-swap_install: True
+swap_files_remove: False
+swap_files_install: False
 swap_ignore_partition: False
-swap_check: True
-swap_remove: False
-swap_file_path: "/"
-swap_file_name: "swapfile"
-swap_file_priority: 0
-swap_file_permisions: "0600"
-swap_file_owner: "root"
-swap_file_group: "root"
-swap_set_custom_size: False
-swap_custom_size: True
-swap_custom_size_mb: 1024
-swap_set_swappiness: True
+swap_files:
+    - swap_file_name: "swapfile"
+      swap_file_path: "/"
+      swap_file_priority: 0
+      swap_file_permisions: "0600"
+      swap_file_owner: "root"
+      swap_file_group: "root"
+      swap_file_custom_size_mb: 1024
+      swap_file_custom_size: False
+swap_set_swappiness: False
 swap_swappiness: 60
-swap_set_vfs_cache_pressure: True
+swap_set_vfs_cache_pressure: False
 swap_vfs_cache_pressure: 100
