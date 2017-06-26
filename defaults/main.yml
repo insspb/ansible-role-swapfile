@@ -11,6 +11,7 @@ swap_files:
       swap_file_group: "root"
       swap_file_custom_size_mb: 1024
       swap_file_custom_size: False
+      swap_file_status: "present"
 swap_set_swappiness: False
 swap_swappiness: 60
 swap_set_vfs_cache_pressure: False

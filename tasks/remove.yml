@@ -2,61 +2,70 @@
 - name: Swapfile | Remove | Check swap file already exist
   become: True
   stat:
-    path: "{{ swap_file_path }}/{{ swap_file_name }}"
+    path: "{{ item.swap_file_path }}/{{ item.swap_file_name }}"
     get_checksum: False
     get_md5: False
+  when: item.swap_file_allocated  == False
+  with_items: "{{ swap_files }}"
   register: swap_remove_allocated
 
 - name: Swapfile | Remove | Disable swap file on fly.
   become: True
-  command: "swapoff {{ swap_file_path }}/{{ swap_file_name }}"
+  command: "swapoff {{ item.item.swap_file_path }}/{{ item.item.swap_file_name }}"
   when:
-    - swap_remove_allocated.stat.exists == True
+    - item.stat.exists == True
+  with_items: "{{ swap_remove_allocated.results }}"
 
 - name: Swapfile | Remove | Remove swapfile
   become: True
   file:
-    path: "{{ swap_file_path }}/{{ swap_file_name }}"
+    path: "{{ item.item.swap_file_path }}/{{ item.item.swap_file_name }}"
     state: absent
-    owner: "{{ swap_file_owner }}"
-    group: "{{ swap_file_group }}"
+    owner: "{{ item.item.swap_file_owner }}"
+    group: "{{ item.item.swap_file_group }}"
     mode: "{{ swap_file_permisions }}"
   when:
-    - swap_remove_allocated.stat.exists == True
+    - item.stat.exists == True
+  with_items: "{{ swap_remove_allocated.results }}"
 
 - name: Swapfile | Remove | Check swapfile directory is empty
   become: True
   find:
-    path: "{{ swap_file_path }}"
+    path: "{{ item.swap_file_path }}"
     recurse: yes
+  when:
+    - item.swap_file_allocated  == False
+    - item.swap_file_path != "/"
+  with_items: "{{ swap_files }}"
   register: swap_file_directory_empty
 
 - name: Swapfile | Remove | Remove swapfile directory if empty
   become: True
   file:
-    path: "{{ swap_file_path }}"
+    path: "{{ item.item.swap_file_path }}"
     state: absent
-    owner: "{{ swap_file_owner }}"
-    group: "{{ swap_file_group }}"
-    mode: "{{ swap_file_permisions }}"
+    owner: "{{ item.item.swap_file_owner }}"
+    group: "{{ item.item.swap_file_group }}"
+    mode: "{{ item.item.swap_file_permisions }}"
   when:
-    - swap_remove_allocated.stat.exists == True
-    - swap_file_path != "/"
-    - swap_file_directory_empty.matched|int == 0
+    - item.item.swap_file_path != "/"
+    - item.stat.exists == True
+    - item.matched|int == 0
+  with_items: "{{ swap_file_directory_empty.results }}"
 
 #- name: Swapfile | Remove | Remove swap entry from fstab
 #  become: True
 #  mount:
 #    name: none
-#    src: "{{ swap_file_path }}/{{ swap_file_name }}"
+#    src: "{{ item.item.swap_file_path }}/{{ item.item.swap_file_name }}"
 #    fstype: swap
-#    opts: sw,
+#    opts: "sw,pri={{ item.item.swap_file_priority| default('-1') }}"
 #    dump: 0
 #    passno: 0
 #    state: absent
 #  when:
-#    - swap_remove_allocated.stat.exists == True
-#
+#    - item.stat.exists == True
+#  with_items: "{{ swap_remove_allocated.results }}"
 # !!! Usage of mount module disabled due overwrite bug. Will be enabled again when fixed.
 # !!! Bug info to ansible link: https://github.com/ansible/ansible/issues/26036
 
@@ -64,7 +73,8 @@
   become: True
   lineinfile:
     dest: "/etc/fstab"
-    line: "{{ swap_file_path }}/{{ swap_file_name }}   none    swap    sw,pri={{ swap_file_priority | default('0') }}    0   0"
+    line: "{{ item.item.swap_file_path }}/{{ item.item.swap_file_name }}   none    swap    sw,pri={{ item.item.swap_file_priority | default('-1') }}    0   0"
     state: absent
   when:
-    - swap_remove_allocated.stat.exists == True
+    - item.stat.exists == True
+  with_items: "{{ swap_remove_allocated.results }}"
