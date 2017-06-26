@@ -2,72 +2,77 @@
 - name: Swapfile | Install | Check swap file already exist
   become: True
   stat:
-    path: "{{ swap_file_path }}/{{ swap_file_name }}"
+    path: "{{ item.swap_file_path }}/{{ item.swap_file_name }}"
     get_checksum: False
     get_md5: False
+  with_items: "{{ swap_files }}"
   register: swap_allocated
 
 - name: Swapfile | Install | Make directory for swapfile
   become: True
   file:
-    path: "{{ swap_file_path }}"
+    path: "{{ item.item.swap_file_path }}"
     state: directory
-    owner: "{{ swap_file_owner }}"
-    group: "{{ swap_file_group }}"
-    mode: "{{ swap_file_permisions }}"
+    owner: "{{ item.item.swap_file_owner | default('root') }}"
+    group: "{{ item.item.swap_file_group | default('root') }}"
+    mode: "{{ item.item.swap_file_permisions | default('0600') }}"
   when:
-    - swap_allocated.stat.exists == False
-    - swap_file_path != "/"
+    - item.stat.exists == False
+    - item.item.swap_file_path != "/"
+    - item.item.swap_file_allocated == True
+  with_items: "{{ swap_allocated.results }}"
 
 - name: Swapfile | Install | Create swapfile with custom size
   become: True
-  command: "dd if=/dev/zero of={{ swap_file_path }}/{{ swap_file_name }} bs=1M count={{ swap_custom_size_mb }}"
+  command: "dd if=/dev/zero of={{ item.item.swap_file_path }}/{{ item.item.swap_file_name }} bs=1M count={{ item.item.swap_file_custom_size_mb }}"
   when:
-    - swap_custom_size
-    - swap_allocated.stat.exists == False
-
-- name: Swapfile | Install | Create swapfile with distribution recommended size
-  become: True
-  command: "dd if=/dev/zero of={{ swap_file_path }}/{{ swap_file_name }} bs=1M count={{ swap_size_mb }}"
-  when:
-    - swap_custom_size == False
-    - swap_install_recommended_size
-    - swap_allocated.stat.exists == False
+    - item.item.swap_file_custom_size == True
+    - item.stat.exists == False
+    - item.item.swap_file_allocated == True
+  with_items: "{{ swap_allocated.results }}"
 
 - name: Swapfile | Install | Switch file to swap type.
   become: True
-  command: "mkswap {{ swap_file_path }}/{{ swap_file_name }}"
+  command: "mkswap {{ item.item.swap_file_path }}/{{ item.item.swap_file_name }}"
   when:
-    - swap_allocated.stat.exists == False
+    - item.stat.exists == False
+    - item.item.swap_file_allocated == True
+  with_items: "{{ swap_allocated.results }}"
 
 - name: Swapfile | Install | Set swapfile permissions
   become: True
   file:
-    path: "{{ swap_file_path }}/{{ swap_file_name }}"
-    mode: "{{ swap_file_permisions }}"
-    owner: "{{ swap_file_owner }}"
-    group: "{{ swap_file_group }}"
+    path: "{{ item.item.swap_file_path }}/{{ item.item.swap_file_name }}"
+    mode: "{{ item.item.swap_file_permisions | default('0600') }}"
+    owner: "{{ item.item.swap_file_owner | default('root') }}"
+    group: "{{ item.item.swap_file_group | default('root') }}"
   when:
-    - swap_allocated.stat.exists == False
+    - item.stat.exists == False
+    - item.item.swap_file_allocated == True
+  with_items: "{{ swap_allocated.results }}"
 
 - name: Swapfile | Install | Enable swap file on fly.
   become: True
-  command: "swapon {{ swap_file_path }}/{{ swap_file_name }}"
+  command: "swapon -p {{ item.item.swap_file_priority | default ('-1')}} {{ item.item.swap_file_path }}/{{ item.item.swap_file_name }}"
   when:
-    - swap_allocated.stat.exists == False
+    - item.stat.exists == False
+    - item.item.swap_file_allocated == True
+  with_items: "{{ swap_allocated.results }}"
+
 
 #- name: Swapfile | Install | Add swap entry in fstab
 #  become: True
 #  mount:
 #    name: none
-#    src: "{{ swap_file_path }}/{{ swap_file_name }}"
+#    src: "{{ item.item.swap_file_path }}/{{ item.item.swap_file_name }}"
 #    fstype: swap
-#    opts: sw,
+#    opts: "sw,pri={{ item.item.swap_file_priority }}"
 #    dump: 0
 #    passno: 0
 #    state: present
 #  when:
-#    - swap_allocated.stat.exists == False
+#    - item.item.swap_file_allocated == True
+# with_items: "{{ swap_allocated.results }}"
 #
 # !!! Usage of mount module disabled due overwrite bug. Will be enabled again when fixed.
 # !!! Bug info to ansible link: https://github.com/ansible/ansible/issues/26036
@@ -76,7 +81,9 @@
   become: True
   lineinfile:
     dest: "/etc/fstab"
-    line: "{{ swap_file_path }}/{{ swap_file_name }}   none    swap    sw,pri={{ swap_file_priority | default('0') }}    0   0"
+    line: "{{ item.item.swap_file_path }}/{{ item.item.swap_file_name }}   none    swap    sw,pri={{ item.item.swap_file_priority | default('-1') }}    0   0"
+    regexp: '^\{{ item.item.swap_file_path }}\/{{ item.item.swap_file_name }}\b'
     state: present
   when:
-    - swap_allocated.stat.exists == False
+    - item.item.swap_file_allocated == True
+  with_items: "{{ swap_allocated.results }}"
