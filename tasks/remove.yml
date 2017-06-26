@@ -13,6 +13,7 @@
   become: True
   command: "swapoff {{ item.item.swap_file_path }}/{{ item.item.swap_file_name }}"
   when:
+    - item.item.swap_file_allocated == False
     - item.stat.exists == True
   with_items: "{{ swap_remove_allocated.results }}"
 
@@ -22,6 +23,7 @@
     path: "{{ item.item.swap_file_path }}/{{ item.item.swap_file_name }}"
     state: absent
   when:
+    - item.item.swap_file_allocated == False
     - item.stat.exists == True
   with_items: "{{ swap_remove_allocated.results }}"
 
@@ -42,8 +44,8 @@
     path: "{{ item.item.swap_file_path }}"
     state: absent
   when:
+    - item.item.swap_file_allocated == False
     - item.item.swap_file_path != "/"
-    - item.stat.exists == True
     - item.matched|int == 0
   with_items: "{{ swap_file_directory_empty.results }}"
 
@@ -67,8 +69,8 @@
   become: True
   lineinfile:
     dest: "/etc/fstab"
-    line: "{{ item.item.swap_file_path }}/{{ item.item.swap_file_name }}   none    swap    sw,pri={{ item.item.swap_file_priority | default('-1') }}    0   0"
+    regexp: '^\{{ item.item.swap_file_path }}\/{{ item.item.swap_file_name }}\b'
     state: absent
   when:
-    - item.stat.exists == True
+    - item.item.swap_file_allocated == False
   with_items: "{{ swap_remove_allocated.results }}"
