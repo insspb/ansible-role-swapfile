@@ -1,4 +1,7 @@
 ---
+- name: Swapfile | Check swap size allocated space adjusted.
+  include: sizecheck.yml
+
 - name: Swapfile | Remove old swap file.
   include: remove.yml
   when: swap_files_remove  == True

@@ -20,7 +20,8 @@
     path: "{{ item.swap_file_path }}/{{ item.swap_file_name }}"
     get_checksum: False
     get_md5: False
-  when: item.swap_file_allocated  == False
+  when:
+    - item.swap_file_allocated  == False
   with_items: "{{ swap_files }}"
   register: swap_remove_allocated
 

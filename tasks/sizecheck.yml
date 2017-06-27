@@ -1,0 +1,30 @@
+---
+- name: Swapfile | Swap size check | Check swap file already exist and its size
+  become: True
+  stat:
+    path: "{{ item.swap_file_path }}/{{ item.swap_file_name }}"
+    get_checksum: False
+    get_md5: False
+  with_items: "{{ swap_files }}"
+  when:
+    - item.swap_file_allocated == True
+  register: swap_allocated
+
+- block:
+
+    - name: Swapfile | Swap size check | Disable swap file due size change.
+      command: "swapoff {{ item.item.swap_file_path }}/{{ item.item.swap_file_name }}"
+      ignore_errors: True
+      with_items: "{{ swap_allocated.results }}"
+
+    - name: Swapfile | Swap size check | Remove old swapfile
+      file:
+        path: "{{ item.item.swap_file_path }}/{{ item.item.swap_file_name }}"
+        state: absent
+      with_items: "{{ swap_allocated.results }}"
+
+  when:
+    - item.item.swap_file_allocated == True
+    - item.stat.exists == True
+    - item.stat.size != item.item.swap_file_custom_size_mb * 1024 * 1024
+  become: True
