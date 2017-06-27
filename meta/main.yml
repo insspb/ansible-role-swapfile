@@ -1,6 +1,6 @@
 galaxy_info:
   author: Andrey Shpak
-  description: Complete management system for swap files in any Linux distributive
+  description: Complete management system for swap files in any Linux distribution
   license: license (MIT)
   min_ansible_version: 2.2.1.0
   github_branch: master
