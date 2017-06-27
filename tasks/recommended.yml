@@ -1,0 +1,81 @@
+---
+- name: Debug
+  debug:
+    var: ansible_memory_mb.real.total
+
+- block:
+
+    - name: Swapfile | Recommended | Set swap file size for RedHat systems with < 2GB RAM
+      set_fact:
+        swap_file_filesize: ansible_memory_mb.real.total * 2
+      when:
+        - ansible_memory_mb.real.total <= 2048
+
+    - name: Swapfile | Recommended | Set swap file size for RedHat systems with RAM over 2GB less 8GB
+      set_fact:
+        swap_file_filesize: ansible_memory_mb.real.total
+      when:
+        - ansible_memory_mb.real.total > 2048
+        - ansible_memory_mb.real.total <= 8192
+
+    - name: Swapfile | Recommended | Set swap file size for RedHat systems with > 8GB RAM
+      set_fact:
+        swap_file_filesize: 8192
+      when:
+        - ansible_memory_mb.real.total > 8192
+
+  when:
+    - ansible_os_family == "RedHat"
+# Block based on https://access.redhat.com/documentation/en-US/Red_Hat_Enterprise_Linux/7/html/Storage_Administration_Guide/ch-swapspace.html#tb-recommended-system-swap-space
+# In this RedHat document minimum amount of memory for > 8GB is 4 GB, but as for 2-8 GB recommendation is set to 
+# "Equal to the amount of RAM" we set 8 GB to any bigger amount.
+
+- name: Swapfile | Recommended | Set swap file size for Debian systems
+  set_fact:
+    swap_file_filesize: "{{ ansible_memory_mb.real.total * 2}}"
+  when:
+    - ansible_os_family == "Debian"
+# Debian based on https://help.ubuntu.com/community/SwapFaq maximum variables
+
+- name: Swapfile | Recommended | Check free space
+  assert:
+    that:
+      - "{{ item.mount == '/' and ( item.size_available > (swap_file_filesize |int * 1024 * 1024 * 2 )) }}"
+  with_items: "{{ ansible_mounts }}"
+  register: free_space
+  ignore_errors: yes
+
+- block:
+
+    - name: Swapfile | Recommended installation | Create swapfile with recommended size
+      become: True
+      command: "dd if=/dev/zero of=/swapfile bs=1M count={{ swap_file_filesize }}"
+
+    - name: Swapfile | Recommended installation | Switch file to swap type.
+      become: True
+      command: "mkswap /swapfile"
+
+    - name: Swapfile | Recommended installation | Set swapfile permissions
+      become: True
+      file:
+        path: "/swapfile"
+        mode: "0600"
+        owner: "root"
+        group: "root"
+
+    - name: Swapfile | Recommended installation | Enable swap file on fly.
+      become: True
+      command: "swapon -p -1 /swapfile"
+
+    - name: Swapfile | Recommended installation | Add swap entry in fstab
+      become: True
+      lineinfile:
+        dest: "/etc/fstab"
+        line: "/swapfile   none    swap    sw,pri=-1    0   0"
+        state: present
+
+  when:
+    - free_space|succeeded
+    - swap_file_filesize | default(0) > 0
+# Auto mode will use standart swapfile name on root partition.
+# Installation will work only if future swapfile *2 free disk space available.
