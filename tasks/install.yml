@@ -19,26 +19,25 @@
     group: "{{ item.item.swap_file_group | default('root') }}"
     mode: "{{ item.item.swap_file_permisions | default('0600') }}"
   when:
+    - item.item.swap_file_allocated == True
     - item.stat.exists == False
     - item.item.swap_file_path != "/"
-    - item.item.swap_file_allocated == True
   with_items: "{{ swap_allocated.results }}"
 
 - name: Swapfile | Install | Create swapfile with custom size
   become: True
   command: "dd if=/dev/zero of={{ item.item.swap_file_path }}/{{ item.item.swap_file_name }} bs=1M count={{ item.item.swap_file_custom_size_mb }}"
   when:
-    - item.item.swap_file_custom_size == True
-    - item.stat.exists == False
     - item.item.swap_file_allocated == True
+    - item.stat.exists == False
   with_items: "{{ swap_allocated.results }}"
 
 - name: Swapfile | Install | Switch file to swap type.
   become: True
   command: "mkswap {{ item.item.swap_file_path }}/{{ item.item.swap_file_name }}"
   when:
-    - item.stat.exists == False
     - item.item.swap_file_allocated == True
+    - item.stat.exists == False
   with_items: "{{ swap_allocated.results }}"
 
 - name: Swapfile | Install | Set swapfile permissions
@@ -49,16 +48,16 @@
     owner: "{{ item.item.swap_file_owner | default('root') }}"
     group: "{{ item.item.swap_file_group | default('root') }}"
   when:
-    - item.stat.exists == False
     - item.item.swap_file_allocated == True
+    - item.stat.exists == False
   with_items: "{{ swap_allocated.results }}"
 
 - name: Swapfile | Install | Enable swap file on fly.
   become: True
   command: "swapon -p {{ item.item.swap_file_priority | default ('-1')}} {{ item.item.swap_file_path }}/{{ item.item.swap_file_name }}"
   when:
-    - item.stat.exists == False
     - item.item.swap_file_allocated == True
+    - item.stat.exists == False
   with_items: "{{ swap_allocated.results }}"
 
 

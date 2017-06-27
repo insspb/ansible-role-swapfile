@@ -18,6 +18,7 @@
 
   when:
     - swap_files_use_distribution_recommended == False
+    - swap_files > 0
 
 - name: Swapfile | Check swap and swapfile settings.
   include: setup.yml
