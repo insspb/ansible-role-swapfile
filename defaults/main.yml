@@ -1,4 +1,5 @@
 ---
+swap_file_clean_fstab: False
 swap_files_remove: False
 swap_files_install: False
 swap_ignore_partition: False

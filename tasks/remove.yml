@@ -1,4 +1,19 @@
 ---
+- name: Swapfile | Remove | Clean fstab file from all swap files and partitions records
+  become: True
+  lineinfile:
+    dest: "/etc/fstab"
+    regexp: '(swap|none)[ \t]+(swap)'
+    state: absent
+  when:
+    - swap_file_clean_fstab == True
+  register: fstab_cleared
+
+- name: Swapfile | Remove | Switch off all swap files cleared from fstab
+  command: "swapoff -a"
+  when:
+    - fstab_cleared.changed == True
+
 - name: Swapfile | Remove | Check swap file already exist
   become: True
   stat:
@@ -15,7 +30,9 @@
   when:
     - item.item.swap_file_allocated == False
     - item.stat.exists == True
+    - fstab_cleared.changed == False
   with_items: "{{ swap_remove_allocated.results }}"
+  ignore_errors: True
 
 - name: Swapfile | Remove | Remove swapfile
   become: True
