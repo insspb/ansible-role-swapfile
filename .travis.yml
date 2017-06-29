@@ -1,18 +1,27 @@
 ---
+# Use the new container infrastructure
+#dist: trusty
+sudo: required
 language: python
 python: "2.7"
+services:
+ - docker
 
-# Use the new container infrastructure
-sudo: required
+env:
+  matrix:
+    - ANSIBLE_VERSION="2.1.0.0"
+    - ANSIBLE_VERSION="2.1.6.0"
+    - ANSIBLE_VERSION="2.2.3.0"
+    - ANSIBLE_VERSION="2.3.1.0"
 
 # Install ansible
 before_install:
- - sudo apt-get update -qq
- - sudo apt-get install -qq python-apt python-pycurl python-pip
+ - sudo apt-get -qq update
+ - sudo apt-get -qq install python-apt python-pycurl python-pip
 
 install:
   # Install ansible
-  - pip install ansible
+  - pip install ansible=="$ANSIBLE_VERSION"
 
   # Check ansible version
   - ansible --version
@@ -21,8 +30,130 @@ install:
   - printf '[defaults]\nroles_path=../' >ansible.cfg
 
 script:
+  - echo localhost > inventory
+
   # Basic role syntax check
   - ansible-playbook tests/test.yml -i tests/inventory --syntax-check
+
+  # Play test without any parameters
+  - ansible-playbook -i inventory tests/test.yml --connection=local -vv
+
+  # Idempotence test for test without any parameters
+  - >
+    ansible-playbook -i inventory tests/test.yml --connection=local -vv
+    | grep -q 'changed=0.*failed=0'
+    && (echo 'Idempotence test: pass' && exit 0)
+    || (echo 'Idempotence test: fail' && exit 1)
+
+  # Show swap config for builds debug on this stage
+  - free -m
+  - swapon -s
+  - cat /etc/fstab
+  - df -h
+
+  # Play test with automod
+  - ansible-playbook -i inventory tests/test.yml --connection=local -e @tests/automod -vv
+
+  # Show swap config for builds debug on this stage
+  - free -m
+  - swapon -s
+  - cat /etc/fstab
+  - df -h
+
+  # Idempotence test for test with automod
+  - >
+    ansible-playbook -i inventory tests/test.yml --connection=local -e @tests/automod -vv
+    | grep -q 'changed=0.*failed=0'
+    && (echo 'Idempotence test: pass' && exit 0)
+    || (echo 'Idempotence test: fail' && exit 1)
+
+  # Show swap config for builds debug on this stage
+  - free -m
+  - swapon -s
+  - cat /etc/fstab
+  - df -h
+
+  # Play test with custom size
+  - ansible-playbook -i inventory tests/test.yml --connection=local -e @tests/custom -vv
+
+  # Show swap config for builds debug on this stage
+  - free -m
+  - swapon -s
+  - cat /etc/fstab
+  - df -h
+
+  # Idempotence test for test with customsize
+  - >
+    ansible-playbook -i inventory tests/test.yml --connection=local -e @tests/custom -vv
+    | grep -q 'changed=0.*failed=0'
+    && (echo 'Idempotence test: pass' && exit 0)
+    || (echo 'Idempotence test: fail' && exit 1)
+
+  # Show swap config for builds debug on this stage
+  - free -m
+  - swapon -s
+  - cat /etc/fstab
+  - df -h
+
+  # Play test with custom size (Remove operation)
+  - ansible-playbook -i inventory tests/test.yml --connection=local -e @tests/custom_remove -vv
+
+  # Idempotence test for test with customsize (Remove operation)
+  - >
+    ansible-playbook -i inventory tests/test.yml --connection=local -e @tests/custom_remove -vv
+    | grep -q 'changed=0.*failed=0'
+    && (echo 'Idempotence test: pass' && exit 0)
+    || (echo 'Idempotence test: fail' && exit 1)
+
+  # Show swap config for builds debug on this stage
+  - free -m
+  - swapon -s
+  - cat /etc/fstab
+  - df -h
+
+  # Play test with custom size + multifiles
+  - ansible-playbook -i inventory tests/test.yml --connection=local -e @tests/custom_multifiles -vv
+
+  # Show swap config for builds debug on this stage
+  - free -m
+  - swapon -s
+  - cat /etc/fstab
+  - df -h
+
+  # Idempotence test for test with customsize + multifiles
+  - >
+    ansible-playbook -i inventory tests/test.yml --connection=local -e @tests/custom_multifiles -vv
+    | grep -q 'changed=0.*failed=0'
+    && (echo 'Idempotence test: pass' && exit 0)
+    || (echo 'Idempotence test: fail' && exit 1)
+
+  # Show swap config for builds debug on this stage
+  - free -m
+  - swapon -s
+  - cat /etc/fstab
+  - df -h
+
+  # Play test with custom size + multifiles (Remove operation)
+  - ansible-playbook -i inventory tests/test.yml --connection=local -e @tests/custom_multifiles -vv
+
+  # Show swap config for builds debug on this stage
+  - free -m
+  - swapon -s
+  - cat /etc/fstab
+  - df -h
+
+  # Idempotence test for test with customsize + multifiles (Remove operation)
+  - >
+    ansible-playbook -i inventory tests/test.yml --connection=local -e @tests/custom_multifiles -vv
+    | grep -q 'changed=0.*failed=0'
+    && (echo 'Idempotence test: pass' && exit 0)
+    || (echo 'Idempotence test: fail' && exit 1)
+
+  # Show swap config for builds debug on this stage
+  - free -m
+  - swapon -s
+  - cat /etc/fstab
+  - df -h
 
 notifications:
   webhooks: https://galaxy.ansible.com/api/v1/notifications/
